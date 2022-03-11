@@ -1,10 +1,12 @@
 package api
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/warrenb95/cloud-native-go/internal/store"
 )
 
 type Store interface {
@@ -21,7 +23,7 @@ func (s *RESTServer) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello gorilla/mux\n"))
 }
 
-// expects path "/v1/keyvalue/{key}"
+// PUTKeyValueHandler expects path "/v1/{key}" and will then save that to the store.
 func (s *RESTServer) PUTKeyValueHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -44,4 +46,26 @@ func (s *RESTServer) PUTKeyValueHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+// GetKeyValueHandler expects path "/v1/{key}" and will get the value for the provided key if it exists in the store.
+func (s *RESTServer) GetKeyValueHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	key := vars["key"]
+
+	value, err := s.Store.Get(key)
+	if err != nil {
+		if errors.Is(err, store.ErrNoSuchKey) {
+			http.Error(w,
+				err.Error(),
+				http.StatusNotFound)
+			return
+		}
+		http.Error(w,
+			err.Error(),
+			http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte(value))
 }

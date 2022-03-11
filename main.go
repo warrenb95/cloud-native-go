@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/warrenb95/cloud-native-go/internal/api"
 	"github.com/warrenb95/cloud-native-go/internal/store"
-	"github.com/warrenb95/cloud-native-go/internal/store/api"
 )
 
 func main() {
@@ -17,6 +17,8 @@ func main() {
 	}
 
 	r.HandleFunc("/", server.IndexHandler)
+	r.HandleFunc("/v1/{key}", server.PUTKeyValueHandler).Methods("PUT")
+	r.HandleFunc("/v1/{key}", server.GetKeyValueHandler).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
