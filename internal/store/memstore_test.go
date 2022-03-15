@@ -13,12 +13,12 @@ func TestStore_Put(t *testing.T) {
 		value string
 	}
 	tests := map[string]struct {
-		s           Store
+		s           *Store
 		args        args
 		expectedErr error
 	}{
 		"success": {
-			s: make(Store),
+			s: New(make(map[string]interface{})),
 			args: args{
 				key:   "key",
 				value: "value",
@@ -34,7 +34,7 @@ func TestStore_Put(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			if value, ok := test.s[test.args.key]; !ok {
+			if value, ok := test.s.m[test.args.key]; !ok {
 				t.Fatal("value not found in store")
 			} else {
 				assert.Equal(t, test.args.value, value)
@@ -49,7 +49,7 @@ func TestStore_Get(t *testing.T) {
 	}
 	tests := map[string]struct {
 		storedValue map[string]string
-		s           Store
+		s           *Store
 		args        args
 		want        string
 		expectedErr error
@@ -58,14 +58,14 @@ func TestStore_Get(t *testing.T) {
 			storedValue: map[string]string{
 				"test_key": "test_value",
 			},
-			s: make(Store),
+			s: New(map[string]interface{}{}),
 			args: args{
 				key: "test_key",
 			},
 			want: "test_value",
 		},
 		"no key": {
-			s: make(Store),
+			s: New(map[string]interface{}{}),
 			args: args{
 				key: "test_key",
 			},
@@ -75,7 +75,7 @@ func TestStore_Get(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			for k, v := range test.storedValue {
-				test.s[k] = v
+				test.s.m[k] = v
 			}
 
 			got, err := test.s.Get(test.args.key)
@@ -98,7 +98,7 @@ func TestStore_Delete(t *testing.T) {
 	}
 	tests := map[string]struct {
 		storedValues map[string]string
-		s            Store
+		s            *Store
 		args         args
 		expectedErr  error
 	}{
@@ -106,7 +106,7 @@ func TestStore_Delete(t *testing.T) {
 			storedValues: map[string]string{
 				"key": "",
 			},
-			s: make(Store),
+			s: New(map[string]interface{}{}),
 			args: args{
 				key: "key",
 			},
@@ -115,7 +115,7 @@ func TestStore_Delete(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			for k, v := range test.storedValues {
-				test.s[k] = v
+				test.s.m[k] = v
 			}
 
 			err := test.s.Delete(test.args.key)
@@ -125,7 +125,7 @@ func TestStore_Delete(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			if _, ok := test.s[test.args.key]; ok {
+			if _, ok := test.s.m[test.args.key]; ok {
 				t.Fatalf("key %s should have been deleted", test.args.key)
 			}
 		})
