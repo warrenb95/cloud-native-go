@@ -23,8 +23,8 @@ func (s *RESTServer) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello gorilla/mux\n"))
 }
 
-// PUTKeyValueHandler expects path "/v1/{key}" and will then save that to the store.
-func (s *RESTServer) PUTKeyValueHandler(w http.ResponseWriter, r *http.Request) {
+// PutKeyValueHandler expects path "/v1/{key}" and will then save that to the store.
+func (s *RESTServer) PutKeyValueHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 

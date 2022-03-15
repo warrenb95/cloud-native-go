@@ -1,23 +1,41 @@
 package store
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 var (
 	ErrNoSuchKey = errors.New("no key in store")
 )
 
-type Store map[string]interface{}
+type Store struct {
+	sync.RWMutex
+	m map[string]interface{}
+}
+
+func New(m map[string]interface{}) *Store {
+	return &Store{
+		m: m,
+	}
+}
 
 // Put will overite the key value if the key exists.
-func (s Store) Put(key, value string) error {
-	s[key] = value
+func (s *Store) Put(key, value string) error {
+	s.Lock()
+	defer s.Unlock()
+
+	s.m[key] = value
 
 	return nil
 }
 
 // Get will get the value of the key if it exists.
-func (s Store) Get(key string) (string, error) {
-	value, ok := s[key]
+func (s *Store) Get(key string) (string, error) {
+	s.RLock()
+	defer s.RUnlock()
+
+	value, ok := s.m[key]
 	if !ok {
 		return "", ErrNoSuchKey
 	}
@@ -26,8 +44,11 @@ func (s Store) Get(key string) (string, error) {
 }
 
 // Delete will delete the key value pair from the store.
-func (s Store) Delete(key string) error {
-	delete(s, key)
+func (s *Store) Delete(key string) error {
+	s.Lock()
+	defer s.Unlock()
+
+	delete(s.m, key)
 
 	return nil
 }

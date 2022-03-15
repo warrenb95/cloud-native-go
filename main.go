@@ -11,13 +11,13 @@ import (
 
 func main() {
 	r := mux.NewRouter()
-	store := make(store.Store)
+	store := store.New(make(map[string]interface{}))
 	server := api.RESTServer{
 		Store: store,
 	}
 
 	r.HandleFunc("/", server.IndexHandler)
-	r.HandleFunc("/v1/{key}", server.PUTKeyValueHandler).Methods("PUT")
+	r.HandleFunc("/v1/{key}", server.PutKeyValueHandler).Methods("PUT")
 	r.HandleFunc("/v1/{key}", server.GetKeyValueHandler).Methods("GET")
 	r.HandleFunc("/v1/{key}", server.DeleteKeyValueHandler).Methods("DELETE")
 
