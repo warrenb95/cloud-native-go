@@ -9,14 +9,21 @@ var (
 	ErrNoSuchKey = errors.New("no key in store")
 )
 
-type Store struct {
-	sync.RWMutex
-	m map[string]interface{}
+type TransactionLogger interface {
+	WritePut(key string, value interface{})
+	WriteDelete(ket string)
 }
 
-func New(m map[string]interface{}) *Store {
+type Store struct {
+	sync.RWMutex
+	m  map[string]interface{}
+	tr TransactionLogger
+}
+
+func New(m map[string]interface{}, tr TransactionLogger) *Store {
 	return &Store{
-		m: m,
+		m:  m,
+		tr: tr,
 	}
 }
 

@@ -6,12 +6,13 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/warrenb95/cloud-native-go/internal/api"
+	"github.com/warrenb95/cloud-native-go/internal/persistance"
 	"github.com/warrenb95/cloud-native-go/internal/store"
 )
 
 func main() {
 	r := mux.NewRouter()
-	store := store.New(make(map[string]interface{}))
+	store := store.New(make(map[string]interface{}), &persistance.FileTransactionLogger{})
 	server := api.RESTServer{
 		Store: store,
 	}
