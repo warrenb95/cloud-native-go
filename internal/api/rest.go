@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/warrenb95/cloud-native-go/internal/persistance"
 	"github.com/warrenb95/cloud-native-go/internal/store"
 )
 
@@ -15,8 +16,24 @@ type Store interface {
 	Delete(key string) error
 }
 
+type TransactionLogger interface {
+	WritePut(key string, value string)
+	WriteDelete(ket string)
+	Err() <-chan error
+
+	ReadEvents() (<-chan persistance.Event, <-chan error)
+	Run()
+}
 type RESTServer struct {
-	Store Store
+	store  Store
+	logger TransactionLogger
+}
+
+func New(store Store, logger TransactionLogger) *RESTServer {
+	return &RESTServer{
+		store:  store,
+		logger: logger,
+	}
 }
 
 func (s *RESTServer) IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,13 +54,15 @@ func (s *RESTServer) PutKeyValueHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = s.Store.Put(key, string(value))
+	err = s.store.Put(key, string(value))
 	if err != nil {
 		http.Error(w,
 			err.Error(),
 			http.StatusInternalServerError)
 		return
 	}
+
+	s.logger.WritePut(key, string(value))
 
 	w.WriteHeader(http.StatusCreated)
 }
@@ -53,7 +72,7 @@ func (s *RESTServer) GetKeyValueHandler(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	key := vars["key"]
 
-	value, err := s.Store.Get(key)
+	value, err := s.store.Get(key)
 	if err != nil {
 		if errors.Is(err, store.ErrNoSuchKey) {
 			http.Error(w,
@@ -75,11 +94,13 @@ func (s *RESTServer) DeleteKeyValueHandler(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	key := vars["key"]
 
-	err := s.Store.Delete(key)
+	err := s.store.Delete(key)
 	if err != nil {
 		http.Error(w,
 			err.Error(),
 			http.StatusInternalServerError)
 		return
 	}
+
+	s.logger.WriteDelete(key)
 }

@@ -32,11 +32,11 @@ func (f *FileTransactionLogger) Run() {
 	errors := make(chan error, 1)
 	f.errors = errors
 
-	defer close(events)
-	defer close(errors)
-	defer f.file.Close()
-
 	go func() {
+		defer close(events)
+		defer close(errors)
+		defer f.file.Close()
+
 		for e := range events {
 			f.lastSequence++
 			_, err := fmt.Fprintf(f.file, "%d\t%d\t%s\t%s\n",
@@ -84,8 +84,8 @@ func (f *FileTransactionLogger) ReadEvents() (<-chan Event, <-chan error) {
 	return outEvent, outError
 }
 
-func (f *FileTransactionLogger) WritePut(key string, value interface{}) {
-	f.events <- Event{EventType: EventPut, Key: key, Value: value.([]byte)}
+func (f *FileTransactionLogger) WritePut(key string, value string) {
+	f.events <- Event{EventType: EventPut, Key: key, Value: value}
 }
 
 func (f *FileTransactionLogger) WriteDelete(key string) {

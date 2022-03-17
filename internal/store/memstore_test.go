@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/warrenb95/cloud-native-go/internal/persistance"
 )
 
 func TestStore_Put(t *testing.T) {
@@ -19,7 +18,7 @@ func TestStore_Put(t *testing.T) {
 		expectedErr error
 	}{
 		"success": {
-			s: New(make(map[string]interface{}), &persistance.FileTransactionLogger{}),
+			s: New(make(map[string]string)),
 			args: args{
 				key:   "key",
 				value: "value",
@@ -59,14 +58,14 @@ func TestStore_Get(t *testing.T) {
 			storedValue: map[string]string{
 				"test_key": "test_value",
 			},
-			s: New(map[string]interface{}{}, &persistance.FileTransactionLogger{}),
+			s: New(map[string]string{}),
 			args: args{
 				key: "test_key",
 			},
 			want: "test_value",
 		},
 		"no key": {
-			s: New(map[string]interface{}{}, &persistance.FileTransactionLogger{}),
+			s: New(map[string]string{}),
 			args: args{
 				key: "test_key",
 			},
@@ -107,7 +106,7 @@ func TestStore_Delete(t *testing.T) {
 			storedValues: map[string]string{
 				"key": "",
 			},
-			s: New(map[string]interface{}{}, &persistance.FileTransactionLogger{}),
+			s: New(map[string]string{}),
 			args: args{
 				key: "key",
 			},

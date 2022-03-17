@@ -9,21 +9,14 @@ var (
 	ErrNoSuchKey = errors.New("no key in store")
 )
 
-type TransactionLogger interface {
-	WritePut(key string, value interface{})
-	WriteDelete(ket string)
-}
-
 type Store struct {
 	sync.RWMutex
-	m  map[string]interface{}
-	tr TransactionLogger
+	m map[string]string
 }
 
-func New(m map[string]interface{}, tr TransactionLogger) *Store {
+func New(m map[string]string) *Store {
 	return &Store{
-		m:  m,
-		tr: tr,
+		m: m,
 	}
 }
 
@@ -47,7 +40,7 @@ func (s *Store) Get(key string) (string, error) {
 		return "", ErrNoSuchKey
 	}
 
-	return value.(string), nil
+	return value, nil
 }
 
 // Delete will delete the key value pair from the store.
