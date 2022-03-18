@@ -24,23 +24,23 @@ func NewFileTransactionLogger(filename string) (*FileTransactionLogger, error) {
 	}, nil
 }
 
-func (f *FileTransactionLogger) Run() {
+func (l *FileTransactionLogger) Run() {
 	// Can't just assign the chan to the struct as the channels in the struct are one way.
 	// i.e. can't do f.events = make(chan<- Event, 16) because we can't then recieve on this chan below.
 	events := make(chan Event, 16)
-	f.events = events
+	l.events = events
 	errors := make(chan error, 1)
-	f.errors = errors
+	l.errors = errors
 
 	go func() {
 		defer close(events)
 		defer close(errors)
-		defer f.file.Close()
+		defer l.file.Close()
 
 		for e := range events {
-			f.lastSequence++
-			_, err := fmt.Fprintf(f.file, "%d\t%d\t%s\t%s\n",
-				f.lastSequence, e.EventType, e.Key, e.Value)
+			l.lastSequence++
+			_, err := fmt.Fprintf(l.file, "%d\t%d\t%s\t%s\n",
+				l.lastSequence, e.EventType, e.Key, e.Value)
 
 			if err != nil {
 				errors <- err
@@ -50,8 +50,8 @@ func (f *FileTransactionLogger) Run() {
 	}()
 }
 
-func (f *FileTransactionLogger) ReadEvents() (<-chan Event, <-chan error) {
-	scanner := bufio.NewScanner(f.file)
+func (l *FileTransactionLogger) ReadEvents() (<-chan Event, <-chan error) {
+	scanner := bufio.NewScanner(l.file)
 	outEvent := make(chan Event)
 	outError := make(chan error, 1)
 
@@ -69,11 +69,11 @@ func (f *FileTransactionLogger) ReadEvents() (<-chan Event, <-chan error) {
 				return
 			}
 
-			if f.lastSequence >= e.Sequence {
+			if l.lastSequence >= e.Sequence {
 				outError <- fmt.Errorf("transaction out of sequence order")
 				return
 			}
-			f.lastSequence = e.Sequence
+			l.lastSequence = e.Sequence
 			outEvent <- e
 		}
 		if err := scanner.Err(); err != nil {
@@ -84,14 +84,14 @@ func (f *FileTransactionLogger) ReadEvents() (<-chan Event, <-chan error) {
 	return outEvent, outError
 }
 
-func (f *FileTransactionLogger) WritePut(key string, value string) {
-	f.events <- Event{EventType: EventPut, Key: key, Value: value}
+func (l *FileTransactionLogger) WritePut(key string, value string) {
+	l.events <- Event{EventType: EventPut, Key: key, Value: value}
 }
 
-func (f *FileTransactionLogger) WriteDelete(key string) {
-	f.events <- Event{EventType: EventDelete, Key: key}
+func (l *FileTransactionLogger) WriteDelete(key string) {
+	l.events <- Event{EventType: EventDelete, Key: key}
 }
 
-func (f *FileTransactionLogger) Err() <-chan error {
-	return f.errors
+func (l *FileTransactionLogger) Err() <-chan error {
+	return l.errors
 }
