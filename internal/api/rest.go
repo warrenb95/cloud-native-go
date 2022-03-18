@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/warrenb95/cloud-native-go/internal/persistance"
 	"github.com/warrenb95/cloud-native-go/internal/store"
 )
 
@@ -21,7 +20,7 @@ type TransactionLogger interface {
 	WriteDelete(ket string)
 	Err() <-chan error
 
-	ReadEvents() (<-chan persistance.Event, <-chan error)
+	ReadEvents() (<-chan store.Event, <-chan error)
 	Run()
 }
 type RESTServer struct {

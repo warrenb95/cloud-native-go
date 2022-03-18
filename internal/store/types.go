@@ -1,4 +1,4 @@
-package persistance
+package store
 
 type EventType byte
 
