@@ -27,8 +27,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-func initTransactionLogger(memStore *store.Store) (*store.FileTransactionLogger, error) {
-	logger, err := store.NewFileTransactionLogger("transaction.log")
+func initTransactionLogger(memStore *store.Store) (api.TransactionLogger, error) {
+	logger, err := store.NewPostgresTransactionLogger(store.PostgresConfig{DBName: "localhost"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create event logger: %w", err)
 	}
