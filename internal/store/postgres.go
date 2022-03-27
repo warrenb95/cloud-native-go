@@ -3,6 +3,8 @@ package store
 import (
 	"database/sql"
 	"fmt"
+
+	_ "github.com/lib/pq"
 )
 
 type PostgresTransactionLogger struct {
@@ -16,13 +18,14 @@ type PostgresConfig struct {
 	Host     string
 	User     string
 	Password string
+	Port     string
 }
 
 func NewPostgresTransactionLogger(params PostgresConfig) (*PostgresTransactionLogger, error) {
-	connStr := fmt.Sprintf("host=%s dbname=%s user=%s password=%s",
-		params.Host, params.DBName, params.User, params.Password)
+	connStr := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
+		params.Host, params.Port, params.DBName, params.User, params.Password)
 
-	db, err := sql.Open("postgress", connStr)
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open db: %w", err)
 	}
@@ -138,16 +141,16 @@ func (l *PostgresTransactionLogger) tableExist() (bool, error) {
 }
 
 func (l *PostgresTransactionLogger) createTable() error {
-	query := `CREATE TABLE transactions {
-			sequence BIGSERIAL PRIMARY KEY,
-			event_type INT64 NOT NULL,
-			key TEXT NOT NULL,
-			value TEXT NOT NULL
-		};`
+	query := `CREATE TABLE transactions (
+		sequence      BIGSERIAL PRIMARY KEY,
+		event_type    SMALLINT,
+		key 		  TEXT,
+		value         TEXT
+		);`
 
 	_, err := l.db.Exec(query)
 	if err != nil {
-		return fmt.Errorf("failed to create new table: %w", err)
+		return err
 	}
 
 	return nil
