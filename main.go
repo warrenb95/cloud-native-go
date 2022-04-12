@@ -24,7 +24,7 @@ func main() {
 	r.HandleFunc("/v1/{key}", server.GetKeyValueHandler).Methods("GET")
 	r.HandleFunc("/v1/{key}", server.DeleteKeyValueHandler).Methods("DELETE")
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServeTLS(":8080", "localhost.csr", "localhost.key", r))
 }
 
 func initTransactionLogger(memStore *store.Store) (api.TransactionLogger, error) {
