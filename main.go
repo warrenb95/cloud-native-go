@@ -29,7 +29,7 @@ func main() {
 }
 
 func initTransactionLogger(memStore *store.Store) (api.TransactionLogger, error) {
-	logger, err := store.NewPostgresTransactionLogger(store.PostgresConfig{DBName: "testdb", Host: "localhost", Port: "62086", User: "postgres", Password: "password"})
+	logger, err := store.NewPostgresTransactionLogger(store.PostgresConfig{DBName: "testdb", Host: "localhost", Port: "5432", User: "postgres", Password: "password"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create event logger: %w", err)
 	}
