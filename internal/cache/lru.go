@@ -2,17 +2,24 @@ package cache
 
 import (
 	"container/list"
+	"errors"
 	"sync"
+
+	"github.com/warrenb95/cloud-native-go/internal/model"
 )
 
 type lru struct {
-	sync.RWMutex
-	elementMap map[string]*list.Element
-	list       *list.List
-	size, cap  int
+	sync.Mutex
+	elementMap     map[string]*list.Element
+	list           *list.List
+	size, capacity int
 }
 
-func NewLRUCache(size int) (*lru, error) {
+// NewLRUCache will create and return a LRU cache with the provided capacity.
+func NewLRUCache(capacity int) (*lru, error) {
+	if capacity == 0 {
+		return nil, errors.New("capacity must be > 0")
+	}
 	em := make(map[string]*list.Element)
 	ls := list.New()
 
@@ -20,14 +27,57 @@ func NewLRUCache(size int) (*lru, error) {
 		elementMap: em,
 		list:       ls,
 		size:       0,
-		cap:        size,
+		capacity:   capacity,
 	}, nil
 }
 
-func (l *lru) Add(key string, value interface{}) bool {
-	if l.size < l.cap {
+// Add will add the new key value to the cache and will return true if the request has replaced an old value.
+func (l *lru) Add(value *model.KeyValue) (bool, error) {
+	l.Lock()
+	defer l.Unlock()
 
+	// check if the key is in the map already
+	if elem, ok := l.elementMap[value.Key]; ok {
+		// replace the value
+		elem.Value = value
+
+		// push to front of list as this was recently used
+		l.list.MoveToFront(elem)
+		return false, nil
 	}
 
-	return false
+	if l.size < l.capacity {
+		elem := l.list.PushFront(value)
+		l.elementMap[value.Key] = elem
+		l.size++
+		return false, nil
+	}
+
+	elem := l.list.Back()
+	if elem == nil {
+		return false, errors.New("least used element is nil")
+	}
+
+	kv, ok := elem.Value.(*model.KeyValue)
+	if !ok {
+		return false, errors.New("element value is an invalid type")
+	}
+
+	if _, ok := l.elementMap[kv.Key]; ok {
+		delete(l.elementMap, kv.Key)
+	}
+	l.list.Remove(elem)
+
+	elem.Value = value
+	l.list.PushFront(elem)
+
+	l.elementMap[kv.Key] = elem
+
+	return true, nil
+}
+
+func (l *lru) Size() int {
+	l.Lock()
+	defer l.Unlock()
+	return l.size
 }
