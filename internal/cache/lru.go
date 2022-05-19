@@ -76,6 +76,20 @@ func (l *lru) Add(value *model.KeyValue) (bool, error) {
 	return true, nil
 }
 
+// Get will get the value from the cache if it exists.
+func (l *lru) Get(key string) (interface{}, error) {
+	l.Lock()
+	defer l.Unlock()
+
+	elem, ok := l.elementMap[key]
+	if !ok {
+		return nil, errors.New("key value not found")
+	}
+
+	l.list.MoveToFront(elem)
+	return elem.Value, nil
+}
+
 func (l *lru) Size() int {
 	l.Lock()
 	defer l.Unlock()

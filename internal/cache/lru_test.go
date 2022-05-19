@@ -65,3 +65,61 @@ func Test_lru_Add(t *testing.T) {
 		})
 	}
 }
+
+func Test_lru_Get(t *testing.T) {
+	tests := map[string]struct {
+		capacity    int
+		initValues  []*model.KeyValue
+		key         string
+		want        *model.KeyValue
+		errContains string
+	}{
+		"not found error": {
+			capacity: 1,
+			key:      "key",
+			want: &model.KeyValue{
+				Key:   "key",
+				Value: "value",
+			},
+			errContains: "not found",
+		},
+		"successful": {
+			capacity: 1,
+			initValues: []*model.KeyValue{
+				{
+					Key:   "key1",
+					Value: "value1",
+				},
+			},
+			key: "key1",
+			want: &model.KeyValue{
+				Key:   "key1",
+				Value: "value1",
+			},
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			lru, err := cache.NewLRUCache(test.capacity)
+			require.NoError(t, err)
+
+			for _, val := range test.initValues {
+				_, err := lru.Add(val)
+				require.NoError(t, err)
+			}
+
+			got, err := lru.Get(test.key)
+			if test.errContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), test.errContains)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, test.want, got)
+
+			expectedSize := math.Min(float64(len(test.initValues)+1), float64(test.capacity))
+			assert.Equal(t, expectedSize, float64(lru.Size()))
+		})
+	}
+}
