@@ -118,8 +118,8 @@ func (l *lru) Get(key string) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to add key value to cache: %v", err)
 		}
-
 	}
+
 	l.list.MoveToFront(elem)
 	return elem.Value, nil
 }

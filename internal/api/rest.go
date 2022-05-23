@@ -86,8 +86,10 @@ func (s *RESTServer) GetKeyValueHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	bVal := value.([]byte)
-	w.Write([]byte(bVal))
+	valueStr, ok := value.(string)
+	if ok {
+		w.Write([]byte(valueStr))
+	}
 }
 
 // DeleteKeyValueHandler expects path "v1/{key}" and will delete the key value pair from the store.

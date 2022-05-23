@@ -20,7 +20,7 @@ func main() {
 		log.Fatalf("cannot create cache: %v", err)
 	}
 
-	logger, err := initTransactionLogger(memStore)
+	logger, err := initTransactionLogger(cache)
 	if err != nil {
 		log.Fatalf("cannot load from transaction logger: %v", err)
 	}
@@ -35,8 +35,9 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-func initTransactionLogger(memStore *store.Store) (api.TransactionLogger, error) {
-	logger, err := store.NewPostgresTransactionLogger(store.PostgresConfig{DBName: "testdb", Host: "localhost", Port: "5432", User: "postgres", Password: "password"})
+func initTransactionLogger(cacheStore cache.Store) (api.TransactionLogger, error) {
+	// logger, err := store.NewPostgresTransactionLogger(store.PostgresConfig{DBName: "testdb", Host: "localhost", Port: "5432", User: "postgres", Password: "password"})
+	logger, err := store.NewFileTransactionLogger("transaction.log")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create event logger: %w", err)
 	}
@@ -50,9 +51,9 @@ func initTransactionLogger(memStore *store.Store) (api.TransactionLogger, error)
 		case e, ok = <-events:
 			switch e.EventType {
 			case store.EventDelete:
-				err = memStore.Delete(e.Key)
+				err = cacheStore.Delete(e.Key)
 			case store.EventPut:
-				err = memStore.Put(e.Key, string(e.Value))
+				err = cacheStore.Put(e.Key, string(e.Value))
 			}
 		}
 	}
