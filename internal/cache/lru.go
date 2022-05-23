@@ -31,8 +31,8 @@ func NewLRUCache(capacity int) (*lru, error) {
 	}, nil
 }
 
-// Add will add the new key value to the cache and will return true if the request has replaced an old value.
-func (l *lru) Add(value *model.KeyValue) (bool, error) {
+// Put will updated/create the key value to the cache and will return true if the request has replaced an old value.
+func (l *lru) Put(value *model.KeyValue) (bool, error) {
 	l.Lock()
 	defer l.Unlock()
 
@@ -76,8 +76,8 @@ func (l *lru) Add(value *model.KeyValue) (bool, error) {
 	return true, nil
 }
 
-// Get will get the value from the cache if it exists.
-func (l *lru) Get(key string) (interface{}, error) {
+// Read will get the value from the cache if it exists.
+func (l *lru) Read(key string) (interface{}, error) {
 	l.Lock()
 	defer l.Unlock()
 
@@ -94,4 +94,14 @@ func (l *lru) Size() int {
 	l.Lock()
 	defer l.Unlock()
 	return l.size
+}
+
+// Delete will delete the value if the key exists.
+func (l *lru) Delete(key string) {
+	l.Lock()
+	defer l.Unlock()
+
+	delete(l.elementMap, key)
+
+	l.size--
 }
