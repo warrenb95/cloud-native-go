@@ -7,17 +7,24 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/warrenb95/cloud-native-go/internal/api"
+	"github.com/warrenb95/cloud-native-go/internal/cache"
 	"github.com/warrenb95/cloud-native-go/internal/store"
 )
 
 func main() {
 	r := mux.NewRouter()
-	memStore := store.New(make(map[string]string))
+	memStore := store.New(make(map[string]interface{}))
+
+	cache, err := cache.NewLRUCache(25, memStore)
+	if err != nil {
+		log.Fatalf("cannot create cache: %v", err)
+	}
+
 	logger, err := initTransactionLogger(memStore)
 	if err != nil {
 		log.Fatalf("cannot load from transaction logger: %v", err)
 	}
-	server := api.New(memStore, logger)
+	server := api.New(cache, logger)
 
 	r.HandleFunc("/", server.IndexHandler)
 	r.HandleFunc("/v1/{key}", server.PutKeyValueHandler).Methods("PUT")

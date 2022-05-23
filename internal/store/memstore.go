@@ -1,27 +1,24 @@
 package store
 
 import (
-	"errors"
 	"sync"
-)
 
-var (
-	ErrNoSuchKey = errors.New("no key in store")
+	"github.com/warrenb95/cloud-native-go/internal/model"
 )
 
 type Store struct {
 	sync.RWMutex
-	m map[string]string
+	m map[string]interface{}
 }
 
-func New(m map[string]string) *Store {
+func New(m map[string]interface{}) *Store {
 	return &Store{
 		m: m,
 	}
 }
 
 // Put will overite the key value if the key exists.
-func (s *Store) Put(key, value string) error {
+func (s *Store) Put(key string, value interface{}) error {
 	s.Lock()
 	defer s.Unlock()
 
@@ -31,13 +28,13 @@ func (s *Store) Put(key, value string) error {
 }
 
 // Get will get the value of the key if it exists.
-func (s *Store) Get(key string) (string, error) {
+func (s *Store) Get(key string) (interface{}, error) {
 	s.RLock()
 	defer s.RUnlock()
 
 	value, ok := s.m[key]
 	if !ok {
-		return "", ErrNoSuchKey
+		return "", model.ErrKeyNotFound
 	}
 
 	return value, nil

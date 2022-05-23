@@ -6,12 +6,13 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/warrenb95/cloud-native-go/internal/model"
 	"github.com/warrenb95/cloud-native-go/internal/store"
 )
 
 type Store interface {
-	Put(key, value string) error
-	Get(key string) (string, error)
+	Put(key string, value interface{}) error
+	Get(key string) (interface{}, error)
 	Delete(key string) error
 }
 
@@ -73,7 +74,7 @@ func (s *RESTServer) GetKeyValueHandler(w http.ResponseWriter, r *http.Request) 
 
 	value, err := s.store.Get(key)
 	if err != nil {
-		if errors.Is(err, store.ErrNoSuchKey) {
+		if errors.Is(err, model.ErrKeyNotFound) {
 			http.Error(w,
 				err.Error(),
 				http.StatusNotFound)
@@ -85,7 +86,8 @@ func (s *RESTServer) GetKeyValueHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.Write([]byte(value))
+	bVal := value.([]byte)
+	w.Write([]byte(bVal))
 }
 
 // DeleteKeyValueHandler expects path "v1/{key}" and will delete the key value pair from the store.
