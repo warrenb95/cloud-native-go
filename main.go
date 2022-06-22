@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/warrenb95/cloud-native-go/internal/api"
 	"github.com/warrenb95/cloud-native-go/internal/cache"
+	"github.com/warrenb95/cloud-native-go/internal/middleware"
 	"github.com/warrenb95/cloud-native-go/internal/store"
 )
 
@@ -25,6 +27,9 @@ func main() {
 		log.Fatalf("cannot load from transaction logger: %v", err)
 	}
 	server := api.New(cache, logger)
+
+	throttle := middleware.NewThrottle(20, 1, time.Second)
+	r.Use(throttle.Throttle)
 
 	r.HandleFunc("/", server.IndexHandler)
 	r.HandleFunc("/v1/{key}", server.PutKeyValueHandler).Methods("PUT")
